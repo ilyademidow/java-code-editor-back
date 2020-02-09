@@ -1,7 +1,5 @@
 class Test {
  public static void main(String[] args) {
-
- }
-}ystem
+    System.out.println("asd");
  }
 }

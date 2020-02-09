@@ -1,22 +1,13 @@
 package ru.idemidov.interviewtask;
 
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.logging.Log;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.idemidov.interviewtask.model.Code;
 import ru.idemidov.interviewtask.model.Result;
 
-import javax.websocket.server.PathParam;
-import java.io.*;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.io.IOException;
 
 @RestController
 @RequestMapping(value = "api/v1", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -47,12 +38,14 @@ public class Controller {
 
     @PostMapping("save_tmp")
     public ResponseEntity<String> saveTmp(@RequestBody Code code) {
+        log.info("save_tmp invoked");
         Service.saveTmpCodeFile(code.getCode());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "read_tmp/{fileName}")
     public ResponseEntity<Result> readTmp(@RequestBody Code code) {
+        log.info("read_tmp invoked");
         return ResponseEntity.ok(new Result(Service.getTmpCodeFile(code.getCode()), ""));
     }
 }

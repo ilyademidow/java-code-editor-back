@@ -3,17 +3,16 @@ package ru.idemidov.interviewtask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RegExUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,11 +43,15 @@ public class Service {
      * @throws IOException any troubles with files
      */
     public static void saveCodeFile(String cleanCode, String fileName) throws IOException {
-        Files.deleteIfExists(Paths.get(PATH, "Test.java"));
-        Files.deleteIfExists(Paths.get(PATH, "Test.class"));
-        Files.deleteIfExists(Paths.get(PATH, fileName));
-        Files.deleteIfExists(Paths.get(PATH, fileName));
+        cleanCodeDirectory();
         Files.write(Paths.get(PATH, fileName + ".java"), cleanCode.getBytes(), StandardOpenOption.CREATE);
+    }
+
+    private static void cleanCodeDirectory() throws IOException {
+        File dir = new File(PATH);
+        for(File file : Objects.requireNonNull(dir.listFiles())) {
+            Files.deleteIfExists(Path.of(file.getAbsolutePath()));
+        }
     }
 
     /**
@@ -132,17 +135,5 @@ public class Service {
             System.err.println(e.getMessage());
         }
         return new String(b);
-    }
-}
-
-class InterviewException extends RuntimeException {
-    private String message;
-
-    public String getMessage() {
-        return this.message;
-    }
-
-    public InterviewException(String message) {
-        this.message = message;
     }
 }
