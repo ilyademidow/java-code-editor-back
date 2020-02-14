@@ -4,5 +4,6 @@ import lombok.Data;
 
 @Data
 public class Code {
-    private String code;
+    private final String username;
+    private final String code;
 }

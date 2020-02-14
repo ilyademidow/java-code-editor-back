@@ -1,5 +1,20 @@
 class Test {
  public static void main(String[] args) {
-    System.out.println("asd");
+
+ }
+}String[] asd = {"Aaa", "ccc"};
+ public static void main(String[] args) throws ClassNotFoundException {
+    System.out.print(Arrays.stream(asd).anyMatch(i -> i.equalsIgnoreCase("aba")));
+ }
+}aaa")));
+ }
+}eateStatement();
+    ResultSet rs = stmt.executeQuery("select * from Us");
+    while(rs.next()) {
+    System.out.println(rs.getString("nm"));
+    }
+    System.out.print("asd");
+    stmt.close();
+    conn.close();
  }
 }

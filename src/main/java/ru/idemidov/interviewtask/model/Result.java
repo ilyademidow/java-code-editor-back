@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class Result {
-    private String success;
-    private String error;
+    private final String success;
+    private final String error;
 }

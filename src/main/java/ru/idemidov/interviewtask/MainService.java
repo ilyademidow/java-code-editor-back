@@ -2,6 +2,9 @@ package ru.idemidov.interviewtask;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RegExUtils;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import ru.idemidov.interviewtask.model.Result;
 
 import java.io.*;
 import java.net.URLDecoder;
@@ -17,8 +20,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
-public class Service {
-    //    private static final String PATH = "./src/main/java/ru/idemidov/interviewtask/";
+@Service
+public class MainService {
+    private static final String FORBIDDEN_WORDS_ERROR = "Your code contains one or more of a forbidden words";
+
     private static final String TMP_CODE = "./src/main/resources";
     private static final String PATH = "./src/main/nnn/";
     private static final String CLASSPATH = "src/main/nnn";
@@ -29,7 +34,7 @@ public class Service {
      * @param dirtyCode text from a client
      * @return clean text
      */
-    public static String normalizeCode(String dirtyCode) {
+    private String normalizeCode(final String dirtyCode) {
         String normalCode = URLDecoder.decode(dirtyCode, StandardCharsets.UTF_8);
         StringBuilder sb = new StringBuilder("");
         sb.append(normalCode.replace("&plus;", "+"));
@@ -42,12 +47,12 @@ public class Service {
      * @param cleanCode Java code from a client
      * @throws IOException any troubles with files
      */
-    public static void saveCodeFile(String cleanCode, String fileName) throws IOException {
+    private void saveCodeFile(final String cleanCode, final String username) throws IOException {
         cleanCodeDirectory();
-        Files.write(Paths.get(PATH, fileName + ".java"), cleanCode.getBytes(), StandardOpenOption.CREATE);
+        Files.write(Paths.get(PATH + "/" + username, extractClassName(cleanCode) + ".java"), cleanCode.getBytes(), StandardOpenOption.CREATE);
     }
 
-    private static void cleanCodeDirectory() throws IOException {
+    private void cleanCodeDirectory() throws IOException {
         File dir = new File(PATH);
         for(File file : Objects.requireNonNull(dir.listFiles())) {
             Files.deleteIfExists(Path.of(file.getAbsolutePath()));
@@ -61,8 +66,14 @@ public class Service {
      * @throws InterruptedException subj
      * @throws InterviewException any error in client code
      */
-    public static String compileAndRun(String fileName) throws IOException, InterruptedException, InterviewException {
+    public String compileAndRunUserCode(final String username, final String code) throws IOException, InterruptedException, InterviewException {
         int runtimeExitCode;
+        String cleanCode = normalizeCode(code);
+        if (!validateCode(cleanCode)) {
+            throw new InterviewException(FORBIDDEN_WORDS_ERROR);
+        }
+        String fileName = extractClassName(cleanCode);
+        saveCodeFile(cleanCode, username);
         compile(fileName);
         Process proc = Runtime.getRuntime().exec("java -cp /home/ilya/Projects/Java/interview-task/lib/h2-1.4.200.jar:" + CLASSPATH + " " + fileName);
         runtimeExitCode = proc.waitFor();
@@ -77,7 +88,7 @@ public class Service {
         }
     }
 
-    private static void compile(String fileName) throws IOException, InterruptedException {
+    private void compile(final String fileName) throws IOException, InterruptedException {
         int compilationExitCode;
         Process proc = Runtime.getRuntime().exec("javac -cp " + CLASSPATH + " " + PATH + fileName + ".java");
         log.info(printInputLine(proc.getInputStream()));
@@ -89,7 +100,7 @@ public class Service {
         }
     }
 
-    private static String printInputLine(InputStream is) throws IOException {
+    private String printInputLine(final InputStream is) throws IOException {
         String line;
         StringBuilder sb = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -99,7 +110,7 @@ public class Service {
         return sb.toString();
     }
 
-    private static String printErrorLine(InputStream is) throws IOException {
+    private String printErrorLine(final InputStream is) throws IOException {
         String line;
         StringBuilder sb = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -109,17 +120,17 @@ public class Service {
         return sb.toString();
     }
 
-    public static boolean validateCode(String normalizedCode) {
+    private boolean validateCode(final String normalizedCode) {
         return Arrays.stream(normalizedCode.split("[,.;\\s]")).map(String::toUpperCase).noneMatch(Arrays.asList(forbiddenWords)::contains);
     }
 
-    public static String extractClassName(String cleanCode) {
+    private String extractClassName(final String cleanCode) {
         Pattern regexPattern = Pattern.compile(".*class\\s(\\w+)\\s*.*");
         String className = Arrays.stream(cleanCode.split("\\n")).filter(word -> regexPattern.matcher(word).matches()).findFirst().orElse("Test");
         return regexPattern.matcher(className).replaceAll("$1");
     }
 
-    public static void saveTmpCodeFile(String rawCode) {
+    public void saveTmpCodeFile(final String rawCode) {
         try {
             Files.write(Paths.get(TMP_CODE, "x1cv"), rawCode.getBytes(), StandardOpenOption.CREATE);
         } catch (IOException e) {
@@ -127,7 +138,7 @@ public class Service {
         }
     }
 
-    public static String getTmpCodeFile(String fileName) {
+    public String getTmpCodeFile(final String fileName) {
         byte[] b = new byte[1];
         try {
             b = Files.readAllBytes(Paths.get(TMP_CODE, fileName));
