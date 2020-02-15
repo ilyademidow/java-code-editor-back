@@ -45,12 +45,11 @@ public class MainService {
         String result = printErrorLine(proc.getErrorStream());
         if (!result.isBlank()) {
             log.error(result);
-            return "Exit code " + runtimeExitCode + "\n" + result;
         } else {
             result = printInputLine(proc.getInputStream());
             log.info(result);
-            return "Exit code " + runtimeExitCode + "\n" + result;
         }
+        return "Exit code " + runtimeExitCode + "\n" + result;
     }
 
     /**
@@ -98,10 +97,7 @@ public class MainService {
      */
     private String normalizeCode(final String dirtyCode) {
         String normalCode = URLDecoder.decode(dirtyCode, StandardCharsets.UTF_8);
-        StringBuilder sb = new StringBuilder("");
-        sb.append(normalCode.replace("&plus;", "+"));
-//        sb.append("\n}\n}\n");
-        return sb.toString();
+        return "" + normalCode.replace("&plus;", "+");
     }
 
     /**
@@ -140,7 +136,7 @@ public class MainService {
         StringBuilder sb = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         while ((line = br.readLine()) != null) {
-            sb.append(line + "\n");
+            sb.append(line).append("\n");
         }
         return sb.toString();
     }
@@ -150,7 +146,7 @@ public class MainService {
         StringBuilder sb = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         while ((line = br.readLine()) != null) {
-            sb.append(line + "\n");
+            sb.append(line).append("\n");
         }
         return sb.toString();
     }
