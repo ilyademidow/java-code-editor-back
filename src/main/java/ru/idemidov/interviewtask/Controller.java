@@ -43,13 +43,13 @@ public class Controller {
     @PostMapping("save_tmp")
     public ResponseEntity<String> saveTmp(@RequestBody Code code) {
         log.info("save_tmp invoked");
-        service.saveTmpCodeFile(code.getCode());
+        service.saveTmpCodeFile(code.getUsername(), code.getCode());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "read_tmp/{fileName}")
     public ResponseEntity<Result> readTmp(@RequestBody Code code) {
         log.info("read_tmp invoked");
-        return ResponseEntity.ok(new Result(service.getTmpCodeFile(code.getCode()), ""));
+        return ResponseEntity.ok(new Result(service.getTmpCodeFile(code.getUsername(), code.getCode()), ""));
     }
 }
