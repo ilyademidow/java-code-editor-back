@@ -9,3 +9,8 @@ Java code executor server
 1. Make a `.java` and a `.class` files in that folder and execute it
 and send a result to you
 
+### TODO list
+- Split to REST Controller (RC) and Compiler (C)
+- RC writes code to the queue file
+- C executes code from the queue file
+

@@ -1,7 +1,8 @@
-package ru.idemidov.interviewtask;
+package ru.idemidov.interviewtask.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.idemidov.interviewtask.InterviewException;
 
 import java.io.*;
 import java.net.URLDecoder;
@@ -16,10 +17,9 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @Service
-public class MainService {
+public class Main {
     private static final String FORBIDDEN_WORDS_ERROR = "Your code contains one or more of a forbidden words";
 
-    private static final String TMP_CODE_FILE_NAME = "java_code_tmp.txt";
     private static final String TMP_CODE_PATH = "interview/";
     private static final String[] forbiddenWords = {"PROCESS", "RUNTIME", "SOCKET", "HTTP", "URL", "NET"};
 
@@ -50,44 +50,6 @@ public class MainService {
             log.info(result);
         }
         return "Exit code " + runtimeExitCode + "\n" + result;
-    }
-
-    /**
-     * Read temporary code (can be use for an interviewer)
-     * @param username Name of a user who's code is required
-     * @param rawCode Code is been typing by candidate
-     */
-    public void saveTmpCodeFile(final String username, final String rawCode) {
-        try {
-            File dir = new File(TMP_CODE_PATH, username);
-            final String filePath = TMP_CODE_PATH + username;
-            if (!Files.exists(Paths.get(filePath))) {
-                if(!dir.mkdir()) {
-                    log.error("Unable to create dir " + TMP_CODE_PATH + filePath);
-                    throw new InterviewException("Sorry... Try again later!");
-                }
-            }
-            Files.write(Paths.get(filePath, TMP_CODE_FILE_NAME), rawCode.getBytes(), StandardOpenOption.CREATE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Read temporary code (can be use for an interviewer)
-     * @param username Name of a user who's code is required
-     * @param fileName Code file name (e.g. Test.java)
-     * @return Code as text
-     */
-    public String getTmpCodeFile(final String username, final String fileName) {
-        final String filePath = TMP_CODE_PATH + username;
-        byte[] b = new byte[1];
-        try {
-            b = Files.readAllBytes(Paths.get(filePath, fileName));
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
-        return new String(b);
     }
 
     /**
@@ -151,6 +113,7 @@ public class MainService {
         return sb.toString();
     }
 
+    @Deprecated
     private boolean validateCode(final String normalizedCode) {
         return Arrays.stream(normalizedCode.split("[,.;\\s]")).map(String::toUpperCase).noneMatch(Arrays.asList(forbiddenWords)::contains);
     }
