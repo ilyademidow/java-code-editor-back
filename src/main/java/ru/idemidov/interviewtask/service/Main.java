@@ -18,9 +18,9 @@ import java.util.regex.Pattern;
 @Slf4j
 @Service
 public class Main {
-    private static final String FORBIDDEN_WORDS_ERROR = "Your code contains one or more of a forbidden words";
-
     private static final String TMP_CODE_PATH = "interview/";
+
+    private static final String FORBIDDEN_WORDS_ERROR = "Your code contains one or more of a forbidden words";
     private static final String[] forbiddenWords = {"PROCESS", "RUNTIME", "SOCKET", "HTTP", "URL", "NET"};
 
     /**

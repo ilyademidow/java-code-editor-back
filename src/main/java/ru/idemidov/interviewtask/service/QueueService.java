@@ -26,7 +26,7 @@ public class QueueService {
     @Value("${redis.map}")
     private final String redisMapName;
     @Value("${redis.url}")
-    private String redisUrl;
+    private final String redisUrl;
 
     //TODO sudo docker run -d --hostname my-rabbit --name some-rabbit -p 5672:5672 rabbitmq:3.7-alpine
     /**
