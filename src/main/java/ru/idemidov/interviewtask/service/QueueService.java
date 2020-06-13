@@ -12,6 +12,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -24,9 +25,9 @@ public class QueueService {
     private final RabbitTemplate template;
     private final Queue queue;
     @Value("${redis.map}")
-    private final String redisMapName;
+    private String redisMapName;
     @Value("${redis.url}")
-    private final String redisUrl;
+    private String redisUrl;
 
     //TODO sudo docker run -d --hostname my-rabbit --name some-rabbit -p 5672:5672 rabbitmq:3.7-alpine
     /**
@@ -53,12 +54,17 @@ public class QueueService {
         RMap<String, String> map = redisson.getMap(redisMapName);
         String hash;
         try {
-            hash = new String(MessageDigest.getInstance("MD5").digest(code.getBytes()));
+            hash = toHex(MessageDigest.getInstance("MD5").digest(code.getBytes())).toLowerCase();
         } catch (NoSuchAlgorithmException e) {
             hash = String.valueOf(code.getBytes().hashCode());
         }
         map.put(hash, result);
         redisson.shutdown();
         log.info(hash + " storred");
+    }
+
+    private String toHex(byte[] bytes) {
+        BigInteger bi = new BigInteger(1, bytes);
+        return String.format("%0" + (bytes.length << 1) + "X", bi);
     }
 }
