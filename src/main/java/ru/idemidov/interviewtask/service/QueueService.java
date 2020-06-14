@@ -11,7 +11,9 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.idemidov.interviewtask.model.Code;
 
+import javax.xml.crypto.AlgorithmMethod;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -20,6 +22,8 @@ import java.security.NoSuchAlgorithmException;
 @RequiredArgsConstructor
 @Log4j2
 public class QueueService {
+    private static final String MD5 = "MD5";
+
     private final Main codeService;
 
     private final RabbitTemplate template;
@@ -29,38 +33,38 @@ public class QueueService {
     @Value("${redis.url}")
     private String redisUrl;
 
-    //TODO sudo docker run -d --hostname my-rabbit --name some-rabbit -p 5672:5672 rabbitmq:3.7-alpine
     /**
      * Receive program code
      * @param code Program code
-     * @throws NoSuchAlgorithmException
      */
     @RabbitListener(queues = "code")
-    public void receive(String code) throws NoSuchAlgorithmException {
+    public void receive(Code code) {
+        log.info("Received object {}", code);
         String result;
         try {
-            result = codeService.compileAndRunUserCode("ilyademidow", code);
+            result = codeService.compileAndRunUserCode(code.getCode());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             result = e.getMessage();
         }
-        saveResult(code, result);
+        saveResult(code.getUsername(), result);
     }
 
-    private void saveResult(String code, String result) {
+    private void saveResult(String username, String result) {
         Config config = new Config();
         config.useSingleServer().setAddress(redisUrl);
         RedissonClient redisson = Redisson.create(config);
         RMap<String, String> map = redisson.getMap(redisMapName);
         String hash;
         try {
-            hash = toHex(MessageDigest.getInstance("MD5").digest(code.getBytes())).toLowerCase();
+            hash = toHex(MessageDigest.getInstance(MD5).digest(username.getBytes())).toLowerCase();
         } catch (NoSuchAlgorithmException e) {
-            hash = String.valueOf(code.getBytes().hashCode());
+            log.error("Check your code before start!");
+            hash = username;
         }
         map.put(hash, result);
         redisson.shutdown();
-        log.info(hash + " storred");
+        log.info("Value {} stored in map {} with key {}", result, redisMapName, hash);
     }
 
     private String toHex(byte[] bytes) {

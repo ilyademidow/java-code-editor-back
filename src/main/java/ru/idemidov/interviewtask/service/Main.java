@@ -18,10 +18,7 @@ import java.util.regex.Pattern;
 @Slf4j
 @Service
 public class Main {
-    private static final String TMP_CODE_PATH = "interview/";
-
-    private static final String FORBIDDEN_WORDS_ERROR = "Your code contains one or more of a forbidden words";
-    private static final String[] forbiddenWords = {"PROCESS", "RUNTIME", "SOCKET", "HTTP", "URL", "NET"};
+    private static final String TMP_CODE_PATH = "interview/guest";
 
     /**
      * Compile a code and try to execute it
@@ -30,17 +27,15 @@ public class Main {
      * @throws InterruptedException subj
      * @throws InterviewException any error in client code
      */
-    public String compileAndRunUserCode(final String username, final String code) throws IOException, InterruptedException, InterviewException {
+    public String compileAndRunUserCode(final String code) throws IOException, InterruptedException, InterviewException {
         int runtimeExitCode;
         String cleanCode = normalizeCode(code);
-        if (!validateCode(cleanCode)) {
-            throw new InterviewException(FORBIDDEN_WORDS_ERROR);
-        }
         String fileName = extractClassName(cleanCode);
-        saveCodeFile(cleanCode, username);
-        compile(username, fileName);
-        final String filePath = TMP_CODE_PATH + username;
-        Process proc = Runtime.getRuntime().exec("java -cp /home/ilya/Projects/Java/interview-task/lib/h2-1.4.200.jar:" + filePath + "/ " + fileName);
+        saveCodeFile(cleanCode);
+        compile(fileName);
+        Process proc = Runtime.getRuntime().exec(
+                String.format("java -cp /home/ilya/Projects/Java/interview-task/lib/h2-1.4.200.jar:%s/ %s", TMP_CODE_PATH, fileName)
+        );
         runtimeExitCode = proc.waitFor();
         String result = printErrorLine(proc.getErrorStream());
         if (!result.isBlank()) {
@@ -67,23 +62,24 @@ public class Main {
      * @param cleanCode Java code from a client
      * @throws IOException any troubles with files
      */
-    private void saveCodeFile(final String cleanCode, final String username) throws IOException {
-        final String filePath = TMP_CODE_PATH + username;
-        cleanCodeDirectory(username);
-        Files.write(Paths.get(filePath, extractClassName(cleanCode) + ".java"), cleanCode.getBytes(), StandardOpenOption.CREATE);
+    private void saveCodeFile(final String cleanCode) throws IOException {
+        checkAndCleanCodeDirectory();
+        Files.write(Paths.get(TMP_CODE_PATH, extractClassName(cleanCode) + ".java"), cleanCode.getBytes(), StandardOpenOption.CREATE);
     }
 
-    private void cleanCodeDirectory(final String username) throws IOException {
-        File dir = new File(TMP_CODE_PATH + username);
+    private void checkAndCleanCodeDirectory() throws IOException {
+        if (!Files.exists(Path.of(TMP_CODE_PATH))) {
+            Files.createDirectories(Path.of(TMP_CODE_PATH));
+        }
+        File dir = new File(TMP_CODE_PATH);
         for(File file : Objects.requireNonNull(dir.listFiles())) {
             Files.deleteIfExists(Path.of(file.getAbsolutePath()));
         }
     }
 
-    private void compile(final String username, final String fileName) throws IOException, InterruptedException {
+    private void compile(final String fileName) throws IOException, InterruptedException {
         int compilationExitCode;
-        final String filePath = TMP_CODE_PATH + username;
-        Process proc = Runtime.getRuntime().exec("javac -cp " + TMP_CODE_PATH + " " + filePath + "/" + fileName + ".java");
+        Process proc = Runtime.getRuntime().exec(String.format("javac -cp %s %s/%s.java", TMP_CODE_PATH, TMP_CODE_PATH, fileName));
         log.info(printInputLine(proc.getInputStream()));
         compilationExitCode = proc.waitFor();
         String result = printErrorLine(proc.getErrorStream());
@@ -113,14 +109,12 @@ public class Main {
         return sb.toString();
     }
 
-    @Deprecated
-    private boolean validateCode(final String normalizedCode) {
-        return Arrays.stream(normalizedCode.split("[,.;\\s]")).map(String::toUpperCase).noneMatch(Arrays.asList(forbiddenWords)::contains);
-    }
-
     private String extractClassName(final String cleanCode) {
         Pattern regexPattern = Pattern.compile(".*class\\s(\\w+)\\s*.*");
-        String className = Arrays.stream(cleanCode.split("\\n")).filter(word -> regexPattern.matcher(word).matches()).findFirst().orElse("Test");
+        String className = Arrays.stream(cleanCode.split("\\n"))
+                .filter(word -> regexPattern.matcher(word).matches())
+                .findFirst()
+                .orElse("Test");
         return regexPattern.matcher(className).replaceAll("$1");
     }
 }
