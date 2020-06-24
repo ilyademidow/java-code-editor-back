@@ -2,18 +2,14 @@ package ru.idemidov.interviewtask.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.redisson.Redisson;
-import org.redisson.api.RMap;
-import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import ru.idemidov.interviewtask.model.Code;
 
-import javax.xml.crypto.AlgorithmMethod;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -26,12 +22,10 @@ public class QueueService {
 
     private final Main codeService;
 
-    private final RabbitTemplate template;
-    private final Queue queue;
+    private final RedisTemplate<String, String> redisTemplate;
+
     @Value("${redis.map}")
-    private String redisMapName;
-    @Value("${redis.url}")
-    private String redisUrl;
+    private String redisMapName = "code-result";
 
     /**
      * Receive program code
@@ -51,10 +45,6 @@ public class QueueService {
     }
 
     private void saveResult(String username, String result) {
-        Config config = new Config();
-        config.useSingleServer().setAddress(redisUrl);
-        RedissonClient redisson = Redisson.create(config);
-        RMap<String, String> map = redisson.getMap(redisMapName);
         String hash;
         try {
             hash = toHex(MessageDigest.getInstance(MD5).digest(username.getBytes())).toLowerCase();
@@ -62,8 +52,7 @@ public class QueueService {
             log.error("Check your code before start!");
             hash = username;
         }
-        map.put(hash, result);
-        redisson.shutdown();
+        redisTemplate.opsForHash().put(redisMapName, hash, result);
         log.info("Value {} stored in map {} with key {}", result, redisMapName, hash);
     }
 
