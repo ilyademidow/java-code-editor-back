@@ -1,9 +1,11 @@
 package ru.idemidov.interviewtask.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import ru.idemidov.interviewtask.InterviewException;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +20,13 @@ import java.util.regex.Pattern;
 @Slf4j
 @Service
 public class Main {
-    private static final String TMP_CODE_PATH = "interview/guest";
+    public static final String TMP_CODE_PATH = "interview/guest";
+    public File h2DriverPath;
+
+    @PostConstruct
+    public void getPathForH2Driver() throws IOException {
+        h2DriverPath = new ClassPathResource("h2-1.4.200.jar").getFile();
+    }
 
     /**
      * Compile a code and try to execute it
@@ -34,7 +42,7 @@ public class Main {
         saveCodeFile(cleanCode);
         compile(fileName);
         Process proc = Runtime.getRuntime().exec(
-                String.format("java -cp /home/ilya/Projects/Java/interview-task/lib/h2-1.4.200.jar:%s/ %s", TMP_CODE_PATH, fileName)
+                String.format("java -cp %s:%s/ %s", h2DriverPath.getAbsolutePath(), TMP_CODE_PATH, fileName)
         );
         runtimeExitCode = proc.waitFor();
         String result = printErrorLine(proc.getErrorStream());
